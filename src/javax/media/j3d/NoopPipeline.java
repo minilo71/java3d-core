@@ -28,128 +28,29 @@ package javax.media.j3d;
 
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
 
 /**
- * Abstract pipeline class for rendering pipeline methods. All rendering
- * pipeline methods are defined here.
+ * Concrete implementation of Pipeline class for the noop rendering
+ * pipeline.
  */
-abstract class Pipeline {
-    // Supported rendering pipelines
-    enum Type {
-        // Java rendering pipeline using Java Bindings for OpenGL
-        JOGL,
-
-        // No-op rendering pipeline
-        NOOP,
-    }
-
-    // Singleton pipeline instance
-    private static Pipeline pipeline;
-
-    // Type of rendering pipeline (as defined above)
-    private Type pipelineType = null;
-
+class NoopPipeline extends Pipeline {
     /**
-     * An instance of a specific Pipeline subclass should only be constructed
-     * // from the createPipeline method.
+     * Constructor for singleton NoopPipeline instance
      */
-    protected Pipeline() {
-    }
-
-private static class PipelineCreator
-implements java.security.PrivilegedAction<Pipeline> {
-private final Type pipeType;
-
-PipelineCreator(Type type) {
-	pipeType = type;
-}
-
-@Override
-public Pipeline run() {
-	try {
-		switch (pipeType) {
-		case JOGL:
-			return (Pipeline)Class.forName("javax.media.j3d.JoglPipeline").newInstance();
-		case NOOP:
-			return (Pipeline)Class.forName("javax.media.j3d.NoopPipeline").newInstance();
-		}
-	} catch (Exception e) {
-		throw new RuntimeException(e);
-	}
-	return null;
-}
-}
-
-    /**
-     * Initialize the Pipeline. Called exactly once by
-     * MasterControl.loadLibraries() to create the singleton
-     * Pipeline object.
-     */
-    static void createPipeline(Type pipelineType) {
-		pipeline = java.security.AccessController.doPrivileged(new PipelineCreator(pipelineType));
-		pipeline.initialize(pipelineType);
+    protected NoopPipeline() {
     }
 
     /**
-     * Returns the singleton Pipeline object.
+     * Initialize the pipeline
      */
-    static Pipeline getPipeline() {
-        return pipeline;
-    }
+    @Override
+    void initialize(Pipeline.Type pipelineType) {
+        super.initialize(pipelineType);
 
-    /**
-     * Initializes the pipeline object. Only called by initPipeline.
-     * Pipeline subclasses may override this, but must call
-     * super.initialize(pipelineType);
-     */
-    void initialize(Type pipelineType) {
-        setPipelineType(pipelineType);
-    }
-
-    /**
-     * Sets the pipeline type. Only called by initialize.
-     */
-    private void setPipelineType(Type pipelineType) {
-        this.pipelineType = pipelineType;
-    }
-
-    /**
-     * Returns the pipeline type
-     */
-    Type getPipelineType() {
-        return pipelineType;
-    }
-
-    /**
-     * Returns the pipeline name
-     */
-    String getPipelineName() {
-        switch (pipelineType) {
-        case JOGL:
-            return "JOGL";
-        case NOOP:
-            return "NOOP";
-        default:
-            // Should not get here
-            throw new AssertionError("missing case statement");
-        }
-    }
-
-    /**
-     * Returns the renderer name
-     */
-    String getRendererName() {
-        switch (pipelineType) {
-        case JOGL:
-            return "OpenGL";
-        case NOOP:
-            return "None";
-        default:
-            // Should not get here
-            throw new AssertionError("missing case statement");
-        }
+        assert pipelineType == Pipeline.Type.NOOP;
     }
 
     // ---------------------------------------------------------------------
@@ -159,7 +60,8 @@ public Pipeline run() {
     //
 
     // used for GeometryArrays by Copy or interleaved
-    abstract void execute(Context ctx,
+    @Override
+    void execute(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean useAlpha,
@@ -170,10 +72,12 @@ public Pipeline run() {
             int[] texCoordSetOffset,
             int numActiveTexUnitState,
             int vertexAttrCount, int[] vertexAttrSizes,
-            float[] varray, float[] cdata, int cdirty);
+            float[] varray, float[] cdata, int cdirty) {
+    }
 
     // used by GeometryArray by Reference with java arrays
-    abstract void executeVA(Context ctx,
+    @Override
+    void executeVA(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean ignoreVertexColors,
@@ -189,10 +93,12 @@ public Pipeline run() {
             int[] texcoordoffset,
             int numActiveTexUnitState,
             int[] texIndex, int texstride, Object[] texCoords,
-            int cdirty);
+            int cdirty) {
+    }
 
     // used by GeometryArray by Reference with NIO buffer
-    abstract void executeVABuffer(Context ctx,
+    @Override
+    void executeVABuffer(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean ignoreVertexColors,
@@ -211,10 +117,12 @@ public Pipeline run() {
             int[] texcoordoffset,
             int numActiveTexUnitState,
             int[] texIndex, int texstride, Object[] texCoords,
-            int cdirty);
+            int cdirty) {
+    }
 
     // used by GeometryArray by Reference in interleaved format with NIO buffer
-    abstract void executeInterleavedBuffer(Context ctx,
+    @Override
+    void executeInterleavedBuffer(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean useAlpha,
@@ -224,16 +132,17 @@ public Pipeline run() {
             int texCoordSetMapLen,
             int[] texCoordSetOffset,
             int numActiveTexUnitState,
-            FloatBuffer varray, float[] cdata, int cdirty);
+            FloatBuffer varray, float[] cdata, int cdirty) {
+    }
 
-    abstract void setVertexFormat(Context ctx, GeometryArrayRetained geo,
-            int vformat, boolean useAlpha, boolean ignoreVertexColors);
-
-    abstract void disableGlobalAlpha(Context ctx, GeometryArrayRetained geo, int vformat,
-            boolean useAlpha, boolean ignoreVertexColors);
+    @Override
+    void setVertexFormat(Context ctx, GeometryArrayRetained geo,
+            int vformat, boolean useAlpha, boolean ignoreVertexColors) {
+    }
 
     // used for GeometryArrays
-    abstract void buildGA(Context ctx,
+    @Override
+    void buildGA(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale, boolean updateAlpha,
             float alpha,
@@ -244,10 +153,12 @@ public Pipeline run() {
             int texCoordSetMapLen, int[] texCoordSetMapOffset,
             int vertexAttrCount, int[] vertexAttrSizes,
             double[] xform, double[] nxform,
-            float[] varray);
+            float[] varray) {
+    }
 
     // used to Build Dlist GeometryArray by Reference with java arrays
-    abstract void buildGAForByRef(Context ctx,
+    @Override
+    void buildGAForByRef(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,  boolean updateAlpha,
             float alpha,
@@ -263,28 +174,8 @@ public Pipeline run() {
             int texcoordmaplength,
             int[] texcoordoffset,
             int[] texIndex, int texstride, Object[] texCoords,
-            double[] xform, double[] nxform);
-
-    // used to Build Dlist GeometryArray by Reference with NIO buffer
-    // NOTE: NIO buffers are no longer supported in display lists. We
-    // have no plans to add this support.
-    /*
-    abstract void buildGAForBuffer(Context ctx,
-            GeometryArrayRetained geo, int geo_type,
-            boolean isNonUniformScale,  boolean updateAlpha,
-            float alpha,
-            boolean ignoreVertexColors,
-            int vcount,
-            int vformat,
-            int vdefined,
-            int coordIndex, Object vcoords,
-            int colorIndex, Object cdata,
-            int normalIndex, Object ndata,
-            int texcoordmaplength,
-            int[] texcoordoffset,
-            int[] texIndex, int texstride, Object[] texCoords,
-            double[] xform, double[] nxform);
-    */
+            double[] xform, double[] nxform) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -294,7 +185,8 @@ public Pipeline run() {
     //
 
     // by-copy or interleaved, by reference, Java arrays
-    abstract void executeIndexedGeometry(Context ctx,
+    @Override
+    void executeIndexedGeometry(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean useAlpha,
@@ -309,10 +201,12 @@ public Pipeline run() {
             int numActiveTexUnitState,
             float[] varray, float[] cdata,
             int cdirty,
-            int[] indexCoord);
+            int[] indexCoord) {
+    }
 
     // interleaved, by reference, nio buffer
-    abstract void executeIndexedGeometryBuffer(Context ctx,
+    @Override
+    void executeIndexedGeometryBuffer(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean useAlpha,
@@ -326,10 +220,12 @@ public Pipeline run() {
             int numActiveTexUnitState,
             FloatBuffer varray, float[] cdata,
             int cdirty,
-            int[] indexCoord);
+            int[] indexCoord) {
+    }
 
     // non interleaved, by reference, Java arrays
-    abstract void executeIndexedGeometryVA(Context ctx,
+    @Override
+    void executeIndexedGeometryVA(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean ignoreVertexColors,
@@ -348,10 +244,12 @@ public Pipeline run() {
             int numActiveTexUnitState,
             int texstride, Object[] texCoords,
             int cdirty,
-            int[] indexCoord);
+            int[] indexCoord) {
+    }
 
     // non interleaved, by reference, nio buffer
-    abstract void executeIndexedGeometryVABuffer(Context ctx,
+    @Override
+    void executeIndexedGeometryVABuffer(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale,
             boolean ignoreVertexColors,
@@ -371,10 +269,12 @@ public Pipeline run() {
             int numActiveTexUnitState,
             int texstride, Object[] texCoords,
             int cdirty,
-            int[] indexCoord);
+            int[] indexCoord) {
+    }
 
     // by-copy geometry
-    abstract void buildIndexedGeometry(Context ctx,
+    @Override
+    void buildIndexedGeometry(Context ctx,
             GeometryArrayRetained geo, int geo_type,
             boolean isNonUniformScale, boolean updateAlpha,
             float alpha,
@@ -388,7 +288,8 @@ public Pipeline run() {
             int texCoordSetMapLen,
             int[] texCoordSetMapOffset,
             double[] xform, double[] nxform,
-            float[] varray, int[] indexCoord);
+            float[] varray, int[] indexCoord) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -397,16 +298,16 @@ public Pipeline run() {
     // GraphicsContext3D methods
     //
 
-    // Native method for readRaster
-    abstract void readRaster(Context ctx,
+    @Override
+    void readRaster(Context ctx,
             int type, int xSrcOffset, int ySrcOffset,
             int width, int height, int hCanvas,
-            int imageDataType,
-            int imageFormat,
+            int imageDataType,             int imageFormat,
             Object imageBuffer,
             int depthFormat,
-            Object depthBuffer);
+            Object depthBuffer) {
 
+    }
 
     // ---------------------------------------------------------------------
 
@@ -416,134 +317,220 @@ public Pipeline run() {
 
     // ShaderAttributeValue methods
 
-    abstract ShaderError setGLSLUniform1i(Context ctx,
+    @Override
+    ShaderError setGLSLUniform1i(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            int value);
+            int value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform1f(Context ctx,
+    @Override
+    ShaderError setGLSLUniform1f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float value);
+            float value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform2i(Context ctx,
+    @Override
+    ShaderError setGLSLUniform2i(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform2f(Context ctx,
+    @Override
+    ShaderError setGLSLUniform2f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform3i(Context ctx,
+    @Override
+    ShaderError setGLSLUniform3i(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform3f(Context ctx,
+    @Override
+    ShaderError setGLSLUniform3f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform4i(Context ctx,
+    @Override
+    ShaderError setGLSLUniform4i(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform4f(Context ctx,
+    @Override
+    ShaderError setGLSLUniform4f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniformMatrix3f(Context ctx,
+    @Override
+    ShaderError setGLSLUniformMatrix3f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniformMatrix4f(Context ctx,
+    @Override
+    ShaderError setGLSLUniformMatrix4f(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
     // ShaderAttributeArray methods
 
-    abstract ShaderError setGLSLUniform1iArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform1iArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform1fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform1fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform2iArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform2iArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform2fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform2fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform3iArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform3iArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform3fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform3fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform4iArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform4iArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            int[] value);
+            int[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniform4fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniform4fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniformMatrix3fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniformMatrix3fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    abstract ShaderError setGLSLUniformMatrix4fArray(Context ctx,
+    @Override
+    ShaderError setGLSLUniformMatrix4fArray(Context ctx,
             ShaderProgramId shaderProgramId,
             ShaderAttrLoc uniformLocation,
             int numElements,
-            float[] value);
+            float[] value) {
+        return null;
+    }
 
-    // abstract interfaces for shader compilation, etc.
-    abstract ShaderError createGLSLShader(Context ctx, int shaderType, ShaderId[] shaderId);
-    abstract ShaderError destroyGLSLShader(Context ctx, ShaderId shaderId);
-    abstract ShaderError compileGLSLShader(Context ctx, ShaderId shaderId, String program);
+    // interfaces for shader compilation, etc.
+    @Override
+    ShaderError createGLSLShader(Context ctx, int shaderType, ShaderId[] shaderId) {
+        return null;
+    }
+    @Override
+    ShaderError destroyGLSLShader(Context ctx, ShaderId shaderId) {
+        return null;
+    }
+    @Override
+    ShaderError compileGLSLShader(Context ctx, ShaderId shaderId, String program) {
+        return null;
+    }
 
-    abstract ShaderError createGLSLShaderProgram(Context ctx, ShaderProgramId[] shaderProgramId);
-    abstract ShaderError destroyGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId);
-    abstract ShaderError linkGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId,
-            ShaderId[] shaderIds);
-    abstract ShaderError bindGLSLVertexAttrName(Context ctx, ShaderProgramId shaderProgramId,
-            String attrName, int attrIndex);
-    abstract void lookupGLSLShaderAttrNames(Context ctx, ShaderProgramId shaderProgramId,
+    @Override
+    ShaderError createGLSLShaderProgram(Context ctx, ShaderProgramId[] shaderProgramId) {
+        return null;
+    }
+    @Override
+    ShaderError destroyGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId) {
+        return null;
+    }
+    @Override
+    ShaderError linkGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId,
+            ShaderId[] shaderIds) {
+        return null;
+    }
+    @Override
+    ShaderError bindGLSLVertexAttrName(Context ctx, ShaderProgramId shaderProgramId,
+            String attrName, int attrIndex) {
+        return null;
+    }
+    @Override
+    void lookupGLSLShaderAttrNames(Context ctx, ShaderProgramId shaderProgramId,
             int numAttrNames, String[] attrNames, ShaderAttrLoc[] locArr,
-            int[] typeArr, int[] sizeArr, boolean[] isArrayArr);
+            int[] typeArr, int[] sizeArr, boolean[] isArrayArr) {
+    }
 
-    abstract ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId);
+    @Override
+    ShaderError useGLSLShaderProgram(Context ctx, ShaderProgramId shaderProgramId) {
+        return null;
+    }
 
 
     // ---------------------------------------------------------------------
@@ -552,12 +539,14 @@ public Pipeline run() {
     // ColoringAttributesRetained methods
     //
 
-    abstract void updateColoringAttributes(Context ctx,
+    @Override
+    void updateColoringAttributes(Context ctx,
             float dRed, float dGreen, float dBlue,
             float red, float green, float blue,
             float alpha,
             boolean lEnable,
-            int shadeModel);
+            int shadeModel) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -566,9 +555,11 @@ public Pipeline run() {
     // DirectionalLightRetained methods
     //
 
-    abstract void updateDirectionalLight(Context ctx,
+    @Override
+    void updateDirectionalLight(Context ctx,
             int lightSlot, float red, float green,
-            float blue, float x, float y, float z);
+            float blue, float x, float y, float z) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -577,10 +568,12 @@ public Pipeline run() {
     // PointLightRetained methods
     //
 
-    abstract void updatePointLight(Context ctx,
+    @Override
+    void updatePointLight(Context ctx,
             int lightSlot, float red, float green,
             float blue, float ax, float ay, float az,
-            float px, float py, float pz);
+            float px, float py, float pz) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -589,12 +582,14 @@ public Pipeline run() {
     // SpotLightRetained methods
     //
 
-    abstract void updateSpotLight(Context ctx,
+    @Override
+    void updateSpotLight(Context ctx,
             int lightSlot, float red, float green,
             float blue, float ax, float ay, float az,
             float px, float py, float pz, float spreadAngle,
             float concentration, float dx, float dy,
-            float dz);
+            float dz) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -603,9 +598,11 @@ public Pipeline run() {
     // ExponentialFogRetained methods
     //
 
-    abstract void updateExponentialFog(Context ctx,
+    @Override
+    void updateExponentialFog(Context ctx,
             float red, float green, float blue,
-            float density);
+            float density) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -614,9 +611,11 @@ public Pipeline run() {
     // LinearFogRetained methods
     //
 
-    abstract void updateLinearFog(Context ctx,
+    @Override
+    void updateLinearFog(Context ctx,
             float red, float green, float blue,
-            double fdist, double bdist);
+            double fdist, double bdist) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -625,11 +624,13 @@ public Pipeline run() {
     // LineAttributesRetained methods
     //
 
-    abstract void updateLineAttributes(Context ctx,
+    @Override
+    void updateLineAttributes(Context ctx,
             float lineWidth, int linePattern,
             int linePatternMask,
             int linePatternScaleFactor,
-            boolean lineAntialiasing);
+            boolean lineAntialiasing) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -638,13 +639,15 @@ public Pipeline run() {
     // MaterialRetained methods
     //
 
-    abstract void updateMaterial(Context ctx,
+    @Override
+    void updateMaterial(Context ctx,
             float red, float green, float blue, float alpha,
             float ared, float agreen, float ablue,
             float ered, float egreen, float eblue,
             float dred, float dgreen, float dblue,
             float sred, float sgreen, float sblue,
-            float shininess, int colorTarget, boolean enable);
+            float shininess, int colorTarget, boolean enable) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -653,8 +656,10 @@ public Pipeline run() {
     // ModelClipRetained methods
     //
 
-    abstract void updateModelClip(Context ctx, int planeNum, boolean enableFlag,
-            double A, double B, double C, double D);
+    @Override
+    void updateModelClip(Context ctx, int planeNum, boolean enableFlag,
+            double A, double B, double C, double D) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -663,7 +668,9 @@ public Pipeline run() {
     // PointAttributesRetained methods
     //
 
-    abstract void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing);
+    @Override
+    void updatePointAttributes(Context ctx, float pointSize, boolean pointAntialiasing) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -672,11 +679,13 @@ public Pipeline run() {
     // PolygonAttributesRetained methods
     //
 
-    abstract void updatePolygonAttributes(Context ctx,
+    @Override
+    void updatePolygonAttributes(Context ctx,
             int polygonMode, int cullFace,
             boolean backFaceNormalFlip,
             float polygonOffset,
-            float polygonOffsetFactor);
+            float polygonOffsetFactor) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -685,7 +694,8 @@ public Pipeline run() {
     // RenderingAttributesRetained methods
     //
 
-    abstract void updateRenderingAttributes(Context ctx,
+    @Override
+    void updateRenderingAttributes(Context ctx,
             boolean depthBufferWriteEnableOverride,
             boolean depthBufferEnableOverride,
             boolean depthBufferEnable,
@@ -697,7 +707,8 @@ public Pipeline run() {
             boolean userStencilAvailable, boolean stencilEnable,
             int stencilFailOp, int stencilZFailOp, int stencilZPassOp,
             int stencilFunction, int stencilReferenceValue,
-            int stencilCompareMask, int stencilWriteMask );
+            int stencilCompareMask, int stencilWriteMask ) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -706,18 +717,20 @@ public Pipeline run() {
     // TexCoordGenerationRetained methods
     //
 
-   /**
-    * This method updates the native context:
-    * trans contains eyeTovworld transform in d3d
-    * trans contains vworldToEye transform in ogl
-    */
-    abstract void updateTexCoordGeneration(Context ctx,
+    /**
+     * This method updates the native context:
+     * trans contains eyeTovworld transform in d3d
+     * trans contains vworldToEye transform in ogl
+     */
+    @Override
+    void updateTexCoordGeneration(Context ctx,
             boolean enable, int genMode, int format,
             float planeSx, float planeSy, float planeSz, float planeSw,
             float planeTx, float planeTy, float planeTz, float planeTw,
             float planeRx, float planeRy, float planeRz, float planeRw,
             float planeQx, float planeQy, float planeQz, float planeQw,
-            double[] trans);
+            double[] trans) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -726,13 +739,15 @@ public Pipeline run() {
     // TransparencyAttributesRetained methods
     //
 
-    abstract void updateTransparencyAttributes(Context ctx,
+    @Override
+    void updateTransparencyAttributes(Context ctx,
             float alpha, int geometryType,
             int polygonMode,
             boolean lineAA, boolean pointAA,
             int transparencyMode,
             int srcBlendFunction,
-            int dstBlendFunction);
+            int dstBlendFunction) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -741,13 +756,16 @@ public Pipeline run() {
     // TextureAttributesRetained methods
     //
 
-    abstract void updateTextureAttributes(Context ctx,
+    @Override
+    void updateTextureAttributes(Context ctx,
             double[] transform, boolean isIdentity, int textureMode,
             int perspCorrectionMode, float red,
             float green, float blue, float alpha,
-            int textureFormat);
+            int textureFormat) {
+    }
 
-    abstract void updateRegisterCombiners(Context ctx,
+    @Override
+    void updateRegisterCombiners(Context ctx,
             double[] transform, boolean isIdentity, int textureMode,
             int perspCorrectionMode, float red,
             float green, float blue, float alpha,
@@ -755,17 +773,22 @@ public Pipeline run() {
             int combineRgbMode, int combineAlphaMode,
             int[] combineRgbSrc, int[] combineAlphaSrc,
             int[] combineRgbFcn, int[] combineAlphaFcn,
-            int combineRgbScale, int combineAlphaScale);
+            int combineRgbScale, int combineAlphaScale) {
+    }
 
-    abstract void updateTextureColorTable(Context ctx, int numComponents,
+    @Override
+    void updateTextureColorTable(Context ctx, int numComponents,
             int colorTableSize,
-            int[] colorTable);
+            int[] colorTable) {
+    }
 
-    abstract void updateCombiner(Context ctx,
+    @Override
+    void updateCombiner(Context ctx,
             int combineRgbMode, int combineAlphaMode,
             int[] combineRgbSrc, int[] combineAlphaSrc,
             int[] combineRgbFcn, int[] combineAlphaFcn,
-            int combineRgbScale, int combineAlphaScale);
+            int combineRgbScale, int combineAlphaScale) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -774,7 +797,9 @@ public Pipeline run() {
     // TextureUnitStateRetained methods
     //
 
-    abstract void updateTextureUnitState(Context ctx, int unitIndex, boolean enableFlag);
+    @Override
+    void updateTextureUnitState(Context ctx, int unitIndex, boolean enableFlag) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -784,47 +809,67 @@ public Pipeline run() {
     // Texture2DRetained methods
     //
 
-    abstract void bindTexture2D(Context ctx, int objectId, boolean enable);
+    @Override
+    void bindTexture2D(Context ctx, int objectId, boolean enable) {
+    }
 
-    abstract void updateTexture2DImage(Context ctx,
+    @Override
+    void updateTexture2DImage(Context ctx,
             int numLevels, int level,
             int textureFormat, int imageFormat,
             int width, int height,
             int boundaryWidth,
-            int imageDataType, Object data, boolean useAutoMipMap);
+            int imageDataType, Object data, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTexture2DSubImage(Context ctx,
+    @Override
+    void updateTexture2DSubImage(Context ctx,
             int level, int xoffset, int yoffset,
             int textureFormat, int imageFormat,
             int imgXOffset, int imgYOffset,
             int tilew, int width, int height,
-            int imageDataType, Object data, boolean useAutoMipMap);
+            int imageDataType, Object data, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTexture2DLodRange(Context ctx,
+    @Override
+    void updateTexture2DLodRange(Context ctx,
             int baseLevel, int maximumLevel,
-            float minimumLod, float maximumLod);
+            float minimumLod, float maximumLod) {
+    }
 
-    abstract void updateTexture2DLodOffset(Context ctx,
+    @Override
+    void updateTexture2DLodOffset(Context ctx,
             float lodOffsetX, float lodOffsetY,
-            float lodOffsetZ);
+            float lodOffsetZ) {
+    }
 
-    abstract void updateTexture2DBoundary(Context ctx,
+    @Override
+    void updateTexture2DBoundary(Context ctx,
             int boundaryModeS, int boundaryModeT,
             float boundaryRed, float boundaryGreen,
-            float boundaryBlue, float boundaryAlpha);
+            float boundaryBlue, float boundaryAlpha) {
+    }
 
-    abstract void updateTexture2DFilterModes(Context ctx,
-            int minFilter, int magFilter);
+    @Override
+    void updateTexture2DFilterModes(Context ctx,
+            int minFilter, int magFilter) {
+    }
 
-    abstract void updateTexture2DSharpenFunc(Context ctx,
+    @Override
+    void updateTexture2DSharpenFunc(Context ctx,
             int numSharpenTextureFuncPts,
-            float[] sharpenTextureFuncPts);
+            float[] sharpenTextureFuncPts) {
+    }
 
-    abstract void updateTexture2DFilter4Func(Context ctx,
+    @Override
+    void updateTexture2DFilter4Func(Context ctx,
             int numFilter4FuncPts,
-            float[] filter4FuncPts);
+            float[] filter4FuncPts) {
+    }
 
-    abstract void updateTexture2DAnisotropicFilter(Context ctx, float degree);
+    @Override
+    void updateTexture2DAnisotropicFilter(Context ctx, float degree) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -833,50 +878,70 @@ public Pipeline run() {
     // Texture3DRetained methods
     //
 
-    abstract void bindTexture3D(Context ctx, int objectId, boolean enable);
+    @Override
+    void bindTexture3D(Context ctx, int objectId, boolean enable) {
+    }
 
-    abstract void updateTexture3DImage(Context ctx,
+    @Override
+    void updateTexture3DImage(Context ctx,
             int numLevels, int level,
             int textureFormat, int imageFormat,
             int width, int height, int depth,
             int boundaryWidth,
-            int imageDataType, Object imageData, boolean useAutoMipMap);
+            int imageDataType, Object imageData, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTexture3DSubImage(Context ctx,
+    @Override
+    void updateTexture3DSubImage(Context ctx,
             int level,
             int xoffset, int yoffset, int zoffset,
             int textureFormat, int imageFormat,
             int imgXoffset, int imgYoffset, int imgZoffset,
             int tilew, int tileh,
             int width, int height, int depth,
-            int imageDataType, Object imageData, boolean useAutoMipMap);
+            int imageTypeData, Object imageData, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTexture3DLodRange(Context ctx,
+    @Override
+    void updateTexture3DLodRange(Context ctx,
             int baseLevel, int maximumLevel,
-            float minimumLod, float maximumLod);
+            float minimumLod, float maximumLod) {
+    }
 
-    abstract void updateTexture3DLodOffset(Context ctx,
+    @Override
+    void updateTexture3DLodOffset(Context ctx,
             float lodOffsetX, float lodOffsetY,
-            float lodOffsetZ);
+            float lodOffsetZ) {
+    }
 
-    abstract void updateTexture3DBoundary(Context ctx,
+    @Override
+    void updateTexture3DBoundary(Context ctx,
             int boundaryModeS, int boundaryModeT,
             int boundaryModeR, float boundaryRed,
             float boundaryGreen, float boundaryBlue,
-            float boundaryAlpha);
+            float boundaryAlpha) {
+    }
 
-    abstract void updateTexture3DFilterModes(Context ctx,
-            int minFilter, int magFilter);
+    @Override
+    void updateTexture3DFilterModes(Context ctx,
+            int minFilter, int magFilter) {
+    }
 
-    abstract void updateTexture3DSharpenFunc(Context ctx,
+    @Override
+    void updateTexture3DSharpenFunc(Context ctx,
             int numSharpenTextureFuncPts,
-            float[] sharpenTextureFuncPts);
+            float[] sharpenTextureFuncPts) {
+    }
 
-    abstract void updateTexture3DFilter4Func(Context ctx,
+    @Override
+    void updateTexture3DFilter4Func(Context ctx,
             int numFilter4FuncPts,
-            float[] filter4FuncPts);
+            float[] filter4FuncPts) {
+    }
 
-    abstract void updateTexture3DAnisotropicFilter(Context ctx, float degree);
+    @Override
+    void updateTexture3DAnisotropicFilter(Context ctx, float degree) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -885,47 +950,67 @@ public Pipeline run() {
     // TextureCubeMapRetained methods
     //
 
-    abstract void bindTextureCubeMap(Context ctx, int objectId, boolean enable);
+    @Override
+    void bindTextureCubeMap(Context ctx, int objectId, boolean enable) {
+    }
 
-    abstract void updateTextureCubeMapImage(Context ctx,
+    @Override
+    void updateTextureCubeMapImage(Context ctx,
             int face, int numLevels, int level,
             int textureFormat, int imageFormat,
             int width, int height,
             int boundaryWidth,
-            int imageDataType, Object imageData, boolean useAutoMipMap);
+            int imageDataType, Object imageData, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTextureCubeMapSubImage(Context ctx,
+    @Override
+    void updateTextureCubeMapSubImage(Context ctx,
             int face, int level, int xoffset, int yoffset,
             int textureFormat, int imageFormat,
             int imgXOffset, int imgYOffset,
             int tilew, int width, int height,
-            int imageDataType, Object imageData, boolean useAutoMipMap);
+            int imageDataType, Object imageData, boolean useAutoMipMap) {
+    }
 
-    abstract void updateTextureCubeMapLodRange(Context ctx,
+    @Override
+    void updateTextureCubeMapLodRange(Context ctx,
             int baseLevel, int maximumLevel,
-            float minimumLod, float maximumLod);
+            float minimumLod, float maximumLod) {
+    }
 
-    abstract void updateTextureCubeMapLodOffset(Context ctx,
+    @Override
+    void updateTextureCubeMapLodOffset(Context ctx,
             float lodOffsetX, float lodOffsetY,
-            float lodOffsetZ);
+            float lodOffsetZ) {
+    }
 
-    abstract void updateTextureCubeMapBoundary(Context ctx,
+    @Override
+    void updateTextureCubeMapBoundary(Context ctx,
             int boundaryModeS, int boundaryModeT,
             float boundaryRed, float boundaryGreen,
-            float boundaryBlue, float boundaryAlpha);
+            float boundaryBlue, float boundaryAlpha) {
+    }
 
-    abstract void updateTextureCubeMapFilterModes(Context ctx,
-            int minFilter, int magFilter);
+    @Override
+    void updateTextureCubeMapFilterModes(Context ctx,
+            int minFilter, int magFilter) {
+    }
 
-    abstract void updateTextureCubeMapSharpenFunc(Context ctx,
+    @Override
+    void updateTextureCubeMapSharpenFunc(Context ctx,
             int numSharpenTextureFuncPts,
-            float[] sharpenTextureFuncPts);
+            float[] sharpenTextureFuncPts) {
+    }
 
-    abstract void updateTextureCubeMapFilter4Func(Context ctx,
+    @Override
+    void updateTextureCubeMapFilter4Func(Context ctx,
             int numFilter4FuncPts,
-            float[] filter4FuncPts);
+            float[] filter4FuncPts) {
+    }
 
-    abstract void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree);
+    @Override
+    void updateTextureCubeMapAnisotropicFilter(Context ctx, float degree) {
+    }
 
     // ---------------------------------------------------------------------
 
@@ -934,7 +1019,10 @@ public Pipeline run() {
     //
 
     // Maximum lights supported by the native API
-    abstract int getMaximumLights();
+    @Override
+    int getMaximumLights() {
+        return 8;
+    }
 
 
     // ---------------------------------------------------------------------
@@ -944,185 +1032,297 @@ public Pipeline run() {
     //
 
     // This is the native method for creating the underlying graphics context.
-    abstract Context createNewContext(Canvas3D cv, Drawable drawable,
+    @Override
+    Context createNewContext(Canvas3D cv, Drawable drawable,
             Context shareCtx, boolean isSharedCtx,
-            boolean offScreen);
+            boolean offScreen) {
+        return new NoopContext();
+    }
 
-    abstract void createQueryContext(Canvas3D cv, Drawable drawable,
-            boolean offScreen, int width, int height);
+    @Override
+    void createQueryContext(Canvas3D cv, Drawable drawable,
+            boolean offScreen, int width, int height) {
+    }
 
     // This is the native for creating offscreen buffer
-    abstract Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height);
+    @Override
+    Drawable createOffScreenBuffer(Canvas3D cv, Context ctx, int width, int height) {
+        return null;
+    }
 
-    abstract void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable);
+    @Override
+    void destroyOffScreenBuffer(Canvas3D cv, Context ctx, Drawable drawable) {
+    }
 
     // This is the native for reading the image from the offscreen buffer
-    abstract void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int type, Object data, int width, int height);
+    @Override
+    void readOffScreenBuffer(Canvas3D cv, Context ctx, int format, int type, Object data, int width, int height) {
+    }
 
-    // The native method for swapBuffers
-    abstract void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable);
+// The native method for swapBuffers
+@Override
+void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {}
 
     // native method for setting Material when no material is present
-    abstract void updateMaterialColor(Context ctx, float r, float g, float b, float a);
+    @Override
+    void updateMaterialColor(Context ctx, float r, float g, float b, float a) {
+    }
 
-    abstract void destroyContext(Drawable drawable, Context ctx);
+    @Override
+    void destroyContext(Drawable drawable, Context ctx) {
+    }
 
     // This is the native method for doing accumulation.
-    abstract void accum(Context ctx, float value);
+    @Override
+    void accum(Context ctx, float value) {
+    }
 
     // This is the native method for doing accumulation return.
-    abstract void accumReturn(Context ctx);
+    @Override
+    void accumReturn(Context ctx) {
+    }
 
     // This is the native method for clearing the accumulation buffer.
-    abstract void clearAccum(Context ctx);
+    @Override
+    void clearAccum(Context ctx) {
+    }
 
     // This is the native method for getting the number of lights the underlying
     // native library can support.
-    abstract int getNumCtxLights(Context ctx);
+    @Override
+    int getNumCtxLights(Context ctx) {
+        return 0;
+    }
 
     // Native method for decal 1st child setup
-    abstract boolean decal1stChildSetup(Context ctx);
+    @Override
+    boolean decal1stChildSetup(Context ctx) {
+        return false;
+    }
 
     // Native method for decal nth child setup
-    abstract void decalNthChildSetup(Context ctx);
+    @Override
+    void decalNthChildSetup(Context ctx) {
+    }
 
     // Native method for decal reset
-    abstract void decalReset(Context ctx, boolean depthBufferEnable);
+    @Override
+    void decalReset(Context ctx, boolean depthBufferEnable) {
+    }
 
     // Native method for decal reset
-    abstract void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable);
+    @Override
+    void ctxUpdateEyeLightingEnable(Context ctx, boolean localEyeLightingEnable) {
+    }
 
     // The following three methods are used in multi-pass case
 
     // native method for setting blend color
-    abstract void setBlendColor(Context ctx, float red, float green,
-            float blue, float alpha);
+    @Override
+    void setBlendColor(Context ctx, float red, float green,
+            float blue, float alpha) {
+    }
 
     // native method for setting blend func
-    abstract void setBlendFunc(Context ctx, int src, int dst);
+    @Override
+    void setBlendFunc(Context ctx, int src, int dst) {
+    }
 
     // native method for setting fog enable flag
-    abstract void setFogEnableFlag(Context ctx, boolean enableFlag);
+    @Override
+    void setFogEnableFlag(Context ctx, boolean enableFlag) {
+    }
 
     // Setup the full scene antialising in D3D and ogl when GL_ARB_multisamle supported
-    abstract void setFullSceneAntialiasing(Context ctx, boolean enable);
-
-    abstract void setGlobalAlpha(Context ctx, float alpha);
+    @Override
+    void setFullSceneAntialiasing(Context ctx, boolean enable) {
+    }
 
     // Native method to update separate specular color control
-    abstract void updateSeparateSpecularColorEnable(Context ctx, boolean control);
+    @Override
+    void updateSeparateSpecularColorEnable(Context ctx, boolean control) {
+    }
 
     // True under Solaris,
     // False under windows when display mode <= 8 bit
-    abstract boolean validGraphicsMode();
+    @Override
+    boolean validGraphicsMode() {
+        return true;
+    }
 
     // native method for setting light enables
-    abstract void setLightEnables(Context ctx, long enableMask, int maxLights);
+    @Override
+    void setLightEnables(Context ctx, long enableMask, int maxLights) {
+    }
 
     // native method for setting scene ambient
-    abstract void setSceneAmbient(Context ctx, float red, float green, float blue);
+    @Override
+    void setSceneAmbient(Context ctx, float red, float green, float blue) {
+    }
 
     // native method for disabling fog
-    abstract void disableFog(Context ctx);
+    @Override
+    void disableFog(Context ctx) {
+    }
 
     // native method for disabling modelClip
-    abstract void disableModelClip(Context ctx);
+    @Override
+    void disableModelClip(Context ctx) {
+    }
 
     // native method for setting default RenderingAttributes
-    abstract void resetRenderingAttributes(Context ctx,
+    @Override
+    void resetRenderingAttributes(Context ctx,
             boolean depthBufferWriteEnableOverride,
-            boolean depthBufferEnableOverride);
+            boolean depthBufferEnableOverride) {
+    }
 
     // native method for setting default texture
-    abstract void resetTextureNative(Context ctx, int texUnitIndex);
+    @Override
+    void resetTextureNative(Context ctx, int texUnitIndex) {
+    }
 
     // native method for activating a particular texture unit
-    abstract void activeTextureUnit(Context ctx, int texUnitIndex);
+    @Override
+    void activeTextureUnit(Context ctx, int texUnitIndex) {
+    }
 
     // native method for setting default TexCoordGeneration
-    abstract void resetTexCoordGeneration(Context ctx);
+    @Override
+    void resetTexCoordGeneration(Context ctx) {
+    }
 
     // native method for setting default TextureAttributes
-    abstract void resetTextureAttributes(Context ctx);
+    @Override
+    void resetTextureAttributes(Context ctx) {
+    }
 
     // native method for setting default PolygonAttributes
-    abstract void resetPolygonAttributes(Context ctx);
+    @Override
+    void resetPolygonAttributes(Context ctx) {
+    }
 
     // native method for setting default LineAttributes
-    abstract void resetLineAttributes(Context ctx);
+    @Override
+    void resetLineAttributes(Context ctx) {
+    }
 
     // native method for setting default PointAttributes
-    abstract void resetPointAttributes(Context ctx);
+    @Override
+    void resetPointAttributes(Context ctx) {
+    }
 
     // native method for setting default TransparencyAttributes
-    abstract void resetTransparency(Context ctx, int geometryType,
+    @Override
+    void resetTransparency(Context ctx, int geometryType,
             int polygonMode, boolean lineAA,
-            boolean pointAA);
+            boolean pointAA) {
+    }
 
     // native method for setting default ColoringAttributes
-    abstract void resetColoringAttributes(Context ctx,
+    @Override
+    void resetColoringAttributes(Context ctx,
             float r, float g,
             float b, float a,
-            boolean enableLight);
+            boolean enableLight) {
+    }
 
     /**
      *  This native method makes sure that the rendering for this canvas
      *  gets done now.
      */
-    abstract void syncRender(Context ctx, boolean wait);
-
-    // The native method that sets this ctx to be the current one
-    abstract boolean useCtx(Context ctx, Drawable drawable);
-
-    // Optionally release the context. A pipeline may override this and
-    // returns true if the context was released.
-    boolean releaseCtx(Context ctx) {
-        return false;
+    @Override
+    void syncRender(Context ctx, boolean wait) {
     }
 
-    abstract void clear(Context ctx, float r, float g, float b, boolean clearStencil);
+    // The native method that sets this ctx to be the current one
+    @Override
+    boolean useCtx(Context ctx, Drawable drawable) {
+        return true;
+    }
 
-    abstract void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
-            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, boolean useBiliearFilter);
+    @Override
+    void clear(Context ctx, float r, float g, float b, boolean clearStencil) {
 
-    abstract void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
-            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, float mapZ, float alpha, boolean useBiliearFilter);
+    }
 
-    abstract void executeRasterDepth(Context ctx, float posX, float posY, float posZ,
-            int srcOffsetX, int srcOffsetY, int rasterWidth, int rasterHeight, int depthWidth, int depthHeight,
-            int depthType, Object depthData);
+    @Override
+    void textureFillBackground(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
+            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, boolean useBiliearFilter) {
 
-        // The native method for setting the ModelView matrix.
-    abstract void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix);
+    }
+
+    @Override
+    void textureFillRaster(Context ctx, float texMinU, float texMaxU, float texMinV, float texMaxV,
+            float mapMinX, float mapMaxX, float mapMinY, float mapMaxY, float mapZ, float alpha,
+            boolean useBiliearFilter)  {
+
+    }
+
+    @Override
+    void executeRasterDepth(Context ctx, float posX, float posY, float posZ,
+            int srcOffsetX, int srcOffsetY, int rasterWidth, int rasterHeight,
+            int depthWidth, int depthHeight, int depthType, Object depthData) {
+
+    }
+
+    // The native method for setting the ModelView matrix.
+    @Override
+    void setModelViewMatrix(Context ctx, double[] viewMatrix, double[] modelMatrix) {
+    }
 
     // The native method for setting the Projection matrix.
-    abstract void setProjectionMatrix(Context ctx, double[] projMatrix);
+    @Override
+    void setProjectionMatrix(Context ctx, double[] projMatrix) {
+    }
 
-    abstract void resizeOffscreenLayer(Canvas3D cv, int width, int height);
+    @Override
+    void resizeOffscreenLayer(Canvas3D cv, int width, int height) {}
 
     // The native method for setting the Viewport.
-    abstract void setViewport(Context ctx, int x, int y, int width, int height);
+    @Override
+    void setViewport(Context ctx, int x, int y, int width, int height) {
+    }
 
     // used for display Lists
-    abstract void newDisplayList(Context ctx, int displayListId);
-    abstract void endDisplayList(Context ctx);
-    abstract void callDisplayList(Context ctx, int id, boolean isNonUniformScale);
+    @Override
+    void newDisplayList(Context ctx, int displayListId) {
+    }
+    @Override
+    void endDisplayList(Context ctx) {
+    }
+    @Override
+    void callDisplayList(Context ctx, int id, boolean isNonUniformScale) {
+    }
 
-    abstract void freeDisplayList(Context ctx, int id);
-    abstract void freeTexture(Context ctx, int id);
+    @Override
+    void freeDisplayList(Context ctx, int id) {
+    }
+    @Override
+    void freeTexture(Context ctx, int id) {
+    }
 
-    abstract int generateTexID(Context ctx);
-    abstract void texturemapping(Context ctx,
+	@Override
+	int generateTexID(Context ctx) {
+		return 0;
+	}
+
+    @Override
+    void texturemapping(Context ctx,
             int px, int py,
             int xmin, int ymin, int xmax, int ymax,
             int texWidth, int texHeight,
             int rasWidth,
             int format, int objectId,
             byte[] image,
-            int winWidth, int winHeight);
+            int winWidth, int winHeight) {
+    }
 
-    abstract boolean initTexturemapping(Context ctx, int texWidth,
-            int texHeight, int objectId);
+    @Override
+    boolean initTexturemapping(Context ctx, int texWidth,
+            int texHeight, int objectId) {
+        return true;
+    }
 
 
     // Set internal render mode to one of FIELD_ALL, FIELD_LEFT or
@@ -1130,10 +1330,14 @@ public Pipeline run() {
     // stereo is available before setting the mode to FIELD_LEFT or
     // FIELD_RIGHT.  The boolean isTRUE for double buffered mode, FALSE
     // foe single buffering.
-    abstract void setRenderMode(Context ctx, int mode, boolean doubleBuffer);
+    @Override
+    void setRenderMode(Context ctx, int mode, boolean doubleBuffer) {
+    }
 
     // Set glDepthMask.
-    abstract void setDepthBufferWriteEnable(Context ctx, boolean mode);
+    @Override
+    void setDepthBufferWriteEnable(Context ctx, boolean mode) {
+    }
 
 
     // ---------------------------------------------------------------------
@@ -1148,25 +1352,67 @@ public Pipeline run() {
     // GraphicsConfigTemplate3D.
     // This method must return a valid GraphicsConfig, or else it must throw
     // an exception if one cannot be returned.
-    abstract GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig);
+    @Override
+    GraphicsConfiguration getGraphicsConfig(GraphicsConfiguration gconfig) {
+        System.err.println("NoopPipeline.getGraphicsConfig()");
+        return gconfig;
+    }
 
     // Get best graphics config from pipeline
-    abstract GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct,
-            GraphicsConfiguration[] gc);
+    @Override
+    GraphicsConfiguration getBestConfiguration(GraphicsConfigTemplate3D gct,
+            GraphicsConfiguration[] gc) {
+
+        GraphicsConfiguration gc1 = GraphicsEnvironment.getLocalGraphicsEnvironment().
+                getDefaultScreenDevice().getDefaultConfiguration();
+        // We need to cache the GraphicsTemplate3D
+	synchronized (Canvas3D.graphicsConfigTable) {
+	    if (Canvas3D.graphicsConfigTable.get(gc1) == null) {
+                GraphicsConfigInfo gcInfo = new GraphicsConfigInfo(gct);
+//                gcInfo.setPrivateData(privateData);
+		Canvas3D.graphicsConfigTable.put(gc1, gcInfo);
+            }
+	}
+        return gc1;
+    }
 
     // Determine whether specified graphics config is supported by pipeline
-    abstract boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct,
-            GraphicsConfiguration gc);
+    @Override
+    boolean isGraphicsConfigSupported(GraphicsConfigTemplate3D gct,
+            GraphicsConfiguration gc) {
+        return true;
+    }
 
     // Methods to get actual capabilities from Canvas3D
-    abstract boolean hasDoubleBuffer(Canvas3D cv);
-    abstract boolean hasStereo(Canvas3D cv);
-    abstract int getStencilSize(Canvas3D cv);
-    abstract boolean hasSceneAntialiasingMultisample(Canvas3D cv);
-    abstract boolean hasSceneAntialiasingAccum(Canvas3D cv);
+    @Override
+    boolean hasDoubleBuffer(Canvas3D cv) {
+        return true;
+    }
 
-    // Methods to get native WS display and screen
-    abstract int getScreen(GraphicsDevice graphicsDevice);
+    @Override
+    boolean hasStereo(Canvas3D cv) {
+        return false;
+    }
+
+    @Override
+    int getStencilSize(Canvas3D cv) {
+        return 0;
+    }
+
+    @Override
+    boolean hasSceneAntialiasingMultisample(Canvas3D cv) {
+        return false;
+    }
+
+    @Override
+    boolean hasSceneAntialiasingAccum(Canvas3D cv) {
+        return false;
+    }
+
+    @Override
+    int getScreen(GraphicsDevice graphicsDevice) {
+        return 0;
+    }
 
 
     // ---------------------------------------------------------------------
@@ -1176,12 +1422,27 @@ public Pipeline run() {
     //
 
     // Method to construct a new DrawingSurfaceObject
-    abstract DrawingSurfaceObject createDrawingSurfaceObject(Canvas3D cv);
+    @Override
+    DrawingSurfaceObject createDrawingSurfaceObject(Canvas3D cv) {
+        return new NoopDrawingSurfaceObject(cv);
+    }
 
     // Method to free the drawing surface object
-    abstract void freeDrawingSurface(Canvas3D cv, DrawingSurfaceObject drawingSurfaceObject);
+    @Override
+    void freeDrawingSurface(Canvas3D cv, DrawingSurfaceObject drawingSurfaceObject) {
+        // This method is a no-op
+    }
 
     // Method to free the native drawing surface object
-    abstract void freeDrawingSurfaceNative(Object o);
+    @Override
+    void freeDrawingSurfaceNative(Object o) {
+        // This method is a no-op
+    }
+
+    /**
+     * Dummy context for noop pipeline
+     */
+    static class NoopContext implements Context {
+    }
 
 }
