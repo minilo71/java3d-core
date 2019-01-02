@@ -1,34 +1,38 @@
 <?xml version="1.0"?>
 
-<project name="j3dall" default="jar" basedir=".">
+<project name="j3dall" default="all" basedir=".">
 
   <property name="src.dir"       location="src"/>
   <property name="build.dir"     location="build"/>
   <property name="gen.dir"       location="${build.dir}/gen"/>
   <property name="class.dir"     location="${build.dir}/classes"/>
+  <property name="javadoc.dir"   location="${build.dir}/javadoc"/>
 
   <property name="j3dtools.dir"      location="../j3d-utils"/>
   <property name="j3dtools.src.dir"  location="${j3dtools.dir}/src"/>
 
-  <property name="vecmath.lib"       location="../vecmath/build/jars/vecmath.jar"/>
-  <property name="jogl.lib"          location="../jogl-v2.3.1/jogl-all.jar"/>
-  <property name="gluegen.lib"       location="../jogl-v2.3.1/gluegen-rt.jar"/>
-  
-  <property name="version_base"             value="1.6.0"/>
+  <property name="vecmath.dir"      location="../vecmath"/>
+  <property name="vecmath.src.dir"  location="${vecmath.dir}/src"/>
+  <property name="vecmath.lib"       location="${vecmath.dir}/build/jars/vecmath.jar"/>
+
+  <property name="jogl.lib"          location="../jogl-v2.3.2/jogl-all.jar"/>
+  <property name="gluegen.lib"       location="../jogl-v2.3.2/gluegen-rt.jar"/>
+
+  <property name="version_base"             value="1.6.1"/>
   <property name="build.spec.title"         value="3D Graphics API for the Java Platform"/>
   <property name="build.spec.vendor"        value=""/>
   <property name="build.impl.title"         value="3D Graphics API for the Java Platform"/>
   <property name="build.impl.vendor"        value=""/>
   <property name="build.impl.vendor.id"     value=""/>
 
-  <property name="build.type"               value="daily"/>
-  <property name="buildtime"                value="daily"/>
-  <property name="buildtime_verbose"        value="daily"/>
-  <property name="is_dev_phase"             value="true"/>
-  <property name="is_production"            value="false"/>
+  <property name="build.type"               value="fcs"/>
+  <property name="buildtime"                value="fcs"/>
+  <property name="buildtime_verbose"        value="fcs"/>
+  <property name="is_dev_phase"             value="false"/>
+  <property name="is_production"            value="true"/>
   <property name="use_verbose_buildtime"    value="true"/>
-  <property name="version_buildnum"         value="12"/>
-  <property name="version_build"            value="pre${version_buildnum}"/>
+  <property name="version_buildnum"         value=""/>
+  <property name="version_build"            value=""/>
   <property name="version_suffix"           value="${version_build}"/>
 
   <target name="clean">
@@ -72,10 +76,10 @@
   </target>
 
   <target name="compile" depends="gen">
-    <javac srcdir="${src.dir}:${j3dtools.src.dir}/classes/share:${gen.dir}/src"
+    <javac srcdir="${src.dir}:${j3dtools.src.dir}:${gen.dir}/src"
            destdir="${class.dir}"
-           source="1.5"
-           target="1.5"
+           source="1.6"
+           target="1.6"
            debug="true"
            debuglevel="lines,source"
            deprecation="off"
@@ -84,10 +88,10 @@
 
     <copy todir="${class.dir}">
       <fileset dir="${src.dir}"          includes="**/*.properties"/>
-      <fileset dir="${j3dtools.src.dir}/classes/share" includes="**/*.properties"/>
+      <fileset dir="${j3dtools.src.dir}" includes="**/*.properties"/>
     </copy>
   </target>
-  
+
   <target name="jar" depends="compile">
     <jar jarfile="${build.dir}/jars/j3dcore.jar"
          update="no" compress="false">
@@ -120,7 +124,7 @@
       </manifest>
       <fileset dir="${class.dir}" includes="com/**/*"/>
     </jar>
-    
+
     <zip destfile="${build.dir}/jars/j3dcore-src.zip">
       <fileset dir="${src.dir}" includes="javax/**/*.java"/>
       <fileset dir="${gen.dir}/src" includes="javax/**/*.java"/>
@@ -129,10 +133,23 @@
     </zip>
 
     <zip destfile="${build.dir}/jars/j3dutils-src.zip">
-      <fileset dir="${j3dtools.src.dir}/classes/share" includes="com/**/*.java"/>
+      <fileset dir="${j3dtools.src.dir}" includes="com/**/*.java"/>
       <fileset dir="${j3dtools.dir}" includes="COPYRIGHT.txt"/>
       <fileset dir="${j3dtools.dir}" includes="*LICENSE*.txt"/>
     </zip>
 
   </target>
+
+  <target name="docs">
+    <mkdir dir="${javadoc.dir}"/>
+
+    <javadoc sourcepath="${src.dir}:${j3dtools.src.dir}:${vecmath.src.dir}"
+             packagenames="javax.media.j3d.*,com.sun.j3d.*,javax.vecmath.*"
+             destdir="${javadoc.dir}"
+             additionalparam="-Xdoclint:none"
+             windowtitle="Java3D ${version_base}">
+    </javadoc>
+  </target>
+
+  <target name="all" depends="jar,docs" />
 </project>

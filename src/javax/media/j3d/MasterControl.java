@@ -779,6 +779,22 @@ private static String getProperty(final String prop) {
 		});
 }
 
+	static int getIntegerProperty(String prop, int defaultValue) {
+		int value = defaultValue;
+		String propValue = getProperty(prop);
+
+		if (propValue != null) {
+			try {
+				value = Integer.parseInt(propValue);
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (J3dDebug.debug)
+			System.err.println("Java 3D: " + prop + "=" + value);
+
+		return value;
+	}
+
     static boolean getBooleanProperty(String prop,
 					      boolean defaultValue,
 					      String trueMsg,
@@ -832,6 +848,11 @@ private static String getProperty(final String prop) {
             System.err.println("Java 3D: Unrecognized renderer: " + rendStr);
             // Use default pipeline
         }
+
+		// Java 3D cannot run in headless mode unless using the noop renderer
+		if (java.awt.GraphicsEnvironment.isHeadless() && pipelineType != Pipeline.Type.NOOP) {
+			throw new java.awt.HeadlessException();
+		}
 
         // Construct the singleton Pipeline instance
 		Pipeline.createPipeline(pipelineType);

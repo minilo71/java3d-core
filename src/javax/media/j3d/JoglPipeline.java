@@ -52,6 +52,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.jogamp.common.nio.Buffers;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.AbstractGraphicsScreen;
 import com.jogamp.nativewindow.CapabilitiesChooser;
@@ -61,7 +62,12 @@ import com.jogamp.nativewindow.NativeWindowFactory;
 import com.jogamp.nativewindow.ProxySurface;
 import com.jogamp.nativewindow.UpstreamSurfaceHook;
 import com.jogamp.nativewindow.VisualIDHolder;
+import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
+import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
+import com.jogamp.nativewindow.awt.AWTGraphicsScreen;
+import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.DefaultGLCapabilitiesChooser;
+import com.jogamp.opengl.FBObject;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLCapabilities;
@@ -74,13 +80,6 @@ import com.jogamp.opengl.GLException;
 import com.jogamp.opengl.GLFBODrawable;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.Threading;
-
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
-import com.jogamp.nativewindow.awt.AWTGraphicsDevice;
-import com.jogamp.nativewindow.awt.AWTGraphicsScreen;
-import com.jogamp.nativewindow.awt.JAWTWindow;
-import com.jogamp.opengl.FBObject;
 
 /**
  * Concrete implementation of Pipeline class for the JOGL rendering
@@ -6789,7 +6788,8 @@ void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {
         if (VERBOSE) System.err.println("JoglPipeline.updateMaterialColor()");
 
 		GL2 gl = context(ctx).getGL().getGL2();
-        gl.glColor4f(r, g, b, a);
+		// FIXME: Removed call to glColor4f because of segfault issues in Parallels Desktop driver
+		// gl.glColor4f(r, g, b, a);
         gl.glDisable(GL2.GL_LIGHTING);
     }
 
@@ -7068,6 +7068,8 @@ void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {
         gl.glDepthFunc(GL.GL_LEQUAL);
         gl.glEnable(GL2.GL_COLOR_MATERIAL);
         gl.glDisable(GL.GL_COLOR_LOGIC_OP);
+        gl.glDisable(GL.GL_STENCIL_TEST);
+       
     }
 
     // native method for setting default texture
@@ -7218,9 +7220,10 @@ void swapBuffers(Canvas3D cv, Context ctx, Drawable drawable) {
 
 		GL2 gl = context(ctx).getGL().getGL2();
 
-        if (!enableLight) {
-            gl.glColor4f(r, g, b, a);
-        }
+		if (!enableLight) {
+			// FIXME: Removed call to glColor4f because of segfault issues in Parallels Desktop driver
+			// gl.glColor4f(r, g, b, a);
+		}
         gl.glShadeModel(GL2.GL_SMOOTH);
     }
 
@@ -7693,7 +7696,11 @@ static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
         gl.glEnable(GL.GL_BLEND);
         gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 
-        gl.glEnable(GL.GL_TEXTURE_2D);
+		gl.glEnable(GL.GL_TEXTURE_2D);
+		gl.glPushAttrib(GL2.GL_TRANSFORM_BIT);
+		gl.glMatrixMode(GL.GL_TEXTURE);
+		gl.glLoadIdentity();
+		gl.glPopAttrib();
 
         // loaded identity modelview and projection matrix
         gl.glMatrixMode(GL2.GL_PROJECTION);
@@ -8307,7 +8314,8 @@ static boolean hasFBObjectSizeChanged(JoglDrawable jdraw, int width, int height)
         if (gct.getSceneAntialiasing() != GraphicsConfigTemplate.UNNECESSARY &&
             gct.getDoubleBuffer() != GraphicsConfigTemplate.UNNECESSARY) {
             caps.setSampleBuffers(true);
-            caps.setNumSamples(2);
+            int numSamples = MasterControl.getIntegerProperty("j3d.numSamples", 2);
+            caps.setNumSamples(numSamples);
         } else {
             caps.setSampleBuffers(false);
             caps.setNumSamples(0);
